@@ -1,0 +1,217 @@
+// src/MqttClient.js
+import React, { useEffect, useState } from 'react';
+import mqtt from 'mqtt';
+import RealTimeChart from './RealTimeChart';
+import { crops } from './cropsData';
+
+const MqttClient = () => {
+  const [lastMessage, setLastMessage] = useState({
+    nitrogen: null,
+    phosphorus: null,
+    potassium: null,
+  });
+  const [suggestedCrop, setSuggestedCrop] = useState('');
+  const [currentValue, setCurrentValue] = useState({
+    nitrogen: null,
+    phosphorus: null,
+    potassium: null,
+  });
+  const brokerUrl = 'ws://broker.hivemq.com:8000/mqtt'; // URL do WebSocket do HiveMQ
+  const topic = 'testtopic/1'; 
+
+  useEffect(() => {
+    const client = mqtt.connect(brokerUrl);
+
+    client.on('connect', () => {
+      console.log('Conectado ao broker MQTT!');
+      client.subscribe(topic, (err) => {
+        if (err) {
+          console.error('Falha ao se inscrever no tópico:', err);
+        } else {
+          console.log(`Inscrito no tópico: ${topic}`);
+        }
+      });
+    });
+
+    client.on('message', (topic, message) => {
+      const msg = message.toString();
+      console.log(`Mensagem recebida no tópico ${topic}: ${msg}`);
+
+      // Supondo que a mensagem seja algo como "30.9,15.2,39.9"
+      const [nitrogen, phosphorus, potassium] = msg.split(',').map(Number);
+      const parsedMessage = { nitrogen, phosphorus, potassium };
+      
+      setLastMessage(parsedMessage);
+      setCurrentValue(parsedMessage);
+
+      let bestCrop = '';
+      let smallestDifference = Infinity;
+
+      crops.forEach((crop) => {
+        const difference = Math.abs(crop.nitrogen - nitrogen) + 
+                           Math.abs(crop.phosphorus - phosphorus) + 
+                           Math.abs(crop.potassium - potassium);
+
+        if (difference < smallestDifference) {
+          smallestDifference = difference;
+          bestCrop = crop.name;
+        }
+      });
+
+      setSuggestedCrop(bestCrop);
+    });
+
+    // Função para gerar valores aleatórios e publicá-los
+    const publishRandomData = () => {
+      const nitrogen = (Math.random() * 50).toFixed(2);
+      const phosphorus = (Math.random() * 30).toFixed(2);
+      const potassium = (Math.random() * 60).toFixed(2);
+      const message = `${nitrogen},${phosphorus},${potassium}`;
+      //client.publish(topic, message);
+      console.log(`Dados simulados enviados: ${message}`);
+    };
+
+    // Publica dados simulados a cada minuto
+    const intervalId = setInterval(publishRandomData, 6000);
+
+    return () => {
+      client.end();
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  return (
+    <div>
+      <h2>Mensagens MQTT:</h2>
+      <p>Nitrogênio: {lastMessage.nitrogen}</p>
+      <p>Fósforo: {lastMessage.phosphorus}</p>
+      <p>Potássio: {lastMessage.potassium}</p>
+
+      <h3>Sugestão de Plantio:</h3>
+      <p>{suggestedCrop ? `A melhor cultura para plantar é: ${suggestedCrop}` : 'Aguardando dados...'}</p>
+      <RealTimeChart dataStream={currentValue} />
+    </div>
+  );
+};
+
+export default MqttClient;
+
+///////////////////////////////////////
+
+// src/MqttClient.js
+import React, { useEffect, useState } from 'react';
+import mqtt from 'mqtt';
+import RealTimeChart from './RealTimeChart';
+
+const MqttClient = () => {
+  const [lastMessage, setLastMessage] = useState({
+    nitrogen: null,
+    phosphorus: null,
+    potassium: null,
+  });
+  const [suggestedCrop, setSuggestedCrop] = useState('');
+  const [currentValue, setCurrentValue] = useState({
+    nitrogen: null,
+    phosphorus: null,
+    potassium: null,
+  });
+  const brokerUrl = 'ws://broker.hivemq.com:8000/mqtt'; // URL do WebSocket do HiveMQ
+  const topic = 'testtopic/1/////'; 
+
+  const crops = [
+    {
+      name: 'Tomate',
+      nitrogen: 30,
+      phosphorus: 15,
+      potassium: 40,
+    },
+    {
+      name: 'Alface',
+      nitrogen: 25,
+      phosphorus: 10,
+      potassium: 35,
+    },
+    {
+      name: 'Cenoura',
+      nitrogen: 35,
+      phosphorus: 20,
+      potassium: 45,
+    },
+  ];
+
+  useEffect(() => {
+    const client = mqtt.connect(brokerUrl);
+
+    client.on('connect', () => {
+      console.log('Conectado ao broker MQTT!');
+      client.subscribe(topic, (err) => {
+        if (err) {
+          console.error('Falha ao se inscrever no tópico:', err);
+        } else {
+          console.log(`Inscrito no tópico: ${topic}`);
+        }
+      });
+    });
+
+    client.on('message', (topic, message) => {
+      const msg = message.toString();
+      console.log(`Mensagem recebida no tópico ${topic}: ${msg}`);
+
+      // Supondo que a mensagem seja algo como "30.9,15.2,39.9"
+      const [nitrogen, phosphorus, potassium] = msg.split(',').map(Number);
+      const parsedMessage = { nitrogen, phosphorus, potassium };
+      
+      setLastMessage(parsedMessage);
+      setCurrentValue(parsedMessage);
+
+      let bestCrop = '';
+      let smallestDifference = Infinity;
+
+      crops.forEach((crop) => {
+        const difference = Math.abs(crop.nitrogen - nitrogen) + 
+                           Math.abs(crop.phosphorus - phosphorus) + 
+                           Math.abs(crop.potassium - potassium);
+
+        if (difference < smallestDifference) {
+          smallestDifference = difference;
+          bestCrop = crop.name;
+        }
+      });
+
+      setSuggestedCrop(bestCrop);
+    });
+
+    // Função para gerar valores aleatórios e publicá-los
+    const publishRandomData = () => {
+      const nitrogen = (Math.random() * 50).toFixed(2);
+      const phosphorus = (Math.random() * 30).toFixed(2);
+      const potassium = (Math.random() * 60).toFixed(2);
+      const message = `${nitrogen},${phosphorus},${potassium}`;
+      //client.publish(topic, message);
+      console.log(`Dados simulados enviados: ${message}`);
+    };
+
+    // Publica dados simulados a cada minuto
+    const intervalId = setInterval(publishRandomData, 6000);
+
+    return () => {
+      client.end();
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  return (
+    <div>
+      <h2>Mensagens MQTT:</h2>
+      <p>Nitrogênio: {lastMessage.nitrogen}</p>
+      <p>Fósforo: {lastMessage.phosphorus}</p>
+      <p>Potássio: {lastMessage.potassium}</p>
+
+      <h3>Sugestão de Plantio:</h3>
+      <p>{suggestedCrop ? `A melhor cultura para plantar é: ${suggestedCrop}` : 'Aguardando dados...'}</p>
+      <RealTimeChart dataStream={currentValue} />
+    </div>
+  );
+};
+
+export default MqttClient;
