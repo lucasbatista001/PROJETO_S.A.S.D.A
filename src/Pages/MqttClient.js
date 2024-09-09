@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import mqtt from "mqtt";
 import RealTimeChart from "./RealTimeChart";
-import { crops } from "./cropsData";
-import "./MqttClient.css"; // Certifique-se de criar este arquivo CSS
+import { crops } from "../cropsData";
+import "./MqttClient.css";
+import Header from "../components/header";
+import Footer from "../components/footer";
+import image from "../img/icons8-temperatura-cinética-média-90.png";
 
 const MqttClient = () => {
   const [lastMessage, setLastMessage] = useState({
@@ -40,9 +43,12 @@ const MqttClient = () => {
       const [nitrogen, phosphorus, potassium] = msg.split(",").map(Number);
 
       if (
-        nitrogen >= 1 && nitrogen <= 1999 &&
-        phosphorus >= 1 && phosphorus <= 1999 &&
-        potassium >= 1 && potassium <= 1999
+        nitrogen >= 1 &&
+        nitrogen <= 1999 &&
+        phosphorus >= 1 &&
+        phosphorus <= 1999 &&
+        potassium >= 1 &&
+        potassium <= 1999
       ) {
         const parsedMessage = { nitrogen, phosphorus, potassium };
 
@@ -64,31 +70,53 @@ const MqttClient = () => {
             crop.FosforoRange.length === 2 &&
             crop.PotassioRange.length === 2
           ) {
-            const nitrogenDiff = calculateDifference(nitrogen, crop.NitrogenioRange);
-            const phosphorusDiff = calculateDifference(phosphorus, crop.FosforoRange);
-            const potassiumDiff = calculateDifference(potassium, crop.PotassioRange);
+            const nitrogenDiff = calculateDifference(
+              nitrogen,
+              crop.NitrogenioRange
+            );
+            const phosphorusDiff = calculateDifference(
+              phosphorus,
+              crop.FosforoRange
+            );
+            const potassiumDiff = calculateDifference(
+              potassium,
+              crop.PotassioRange
+            );
 
-            const totalDifference = nitrogenDiff + phosphorusDiff + potassiumDiff;
+            const totalDifference =
+              nitrogenDiff + phosphorusDiff + potassiumDiff;
 
             console.log(`Analisando ${crop.Planta}:`);
-            console.log(`Intervalo Nitrogênio: ${crop.NitrogenioRange[0]} - ${crop.NitrogenioRange[1]}`);
-            console.log(`Intervalo Fósforo: ${crop.FosforoRange[0]} - ${crop.FosforoRange[1]}`);
-            console.log(`Intervalo Potássio: ${crop.PotassioRange[0]} - ${crop.PotassioRange[1]}`);
-            console.log(`Diferença total para ${crop.Planta}: ${totalDifference}`);
+            console.log(
+              `Intervalo Nitrogênio: ${crop.NitrogenioRange[0]} - ${crop.NitrogenioRange[1]}`
+            );
+            console.log(
+              `Intervalo Fósforo: ${crop.FosforoRange[0]} - ${crop.FosforoRange[1]}`
+            );
+            console.log(
+              `Intervalo Potássio: ${crop.PotassioRange[0]} - ${crop.PotassioRange[1]}`
+            );
+            console.log(
+              `Diferença total para ${crop.Planta}: ${totalDifference}`
+            );
 
             if (totalDifference < smallestDifference) {
               smallestDifference = totalDifference;
               bestCrop = crop.Planta;
             }
           } else {
-            console.error(`Intervalos não definidos corretamente para a planta: ${crop.Planta}`);
+            console.error(
+              `Intervalos não definidos corretamente para a planta: ${crop.Planta}`
+            );
           }
         });
 
         setSuggestedCrop(bestCrop);
         console.log(`Melhor cultura sugerida: ${bestCrop}`);
       } else {
-        console.warn("Valores fora do intervalo permitido (1-1999 mg/kg). Ignorando...");
+        console.warn(
+          "Valores fora do intervalo permitido (1-1999 mg/kg). Ignorando..."
+        );
       }
     });
 
@@ -99,34 +127,31 @@ const MqttClient = () => {
 
   return (
     <div>
-      <h2>Mensagens MQTT:</h2>
-      <div className="cards-container">
-        <div className="card">
-          <h3>Nitrogênio</h3>
-          <p>{lastMessage.nitrogen}</p>
-        </div>
-        <div className="card">
-          <h3>Fósforo</h3>
-          <p>{lastMessage.phosphorus}</p>
-        </div>
-        <div className="card">
-          <h3>Potássio</h3>
-          <p>{lastMessage.potassium}</p>
-        </div>
-      </div>
-      <br></br>
-      <div className="cards-container">
-        <div className="card">
-          <h3>Sugestão de Plantio:</h3>
-          <p>
-            {suggestedCrop
-              ? `A melhor cultura para plantar é: ${suggestedCrop}`
-              : "Aguardando dados..."}
-          </p>
+      <Header></Header>
+      <div className="container">
+        <h2>Dashboard</h2>
+        <div className="cards-container">
+          <div className="card">
+            <img className="card-img" src={image} alt="Nitrogênio" />
+            <h3>Nitrogênio</h3>
+            <p>{lastMessage.nitrogen}</p>
           </div>
+          <div className="card">
+            <img className="card-img" src={image} alt="Fósforo" />
+            <h3>Fósforo</h3>
+            <p>{lastMessage.phosphorus}</p>
+          </div>
+          <div className="card">
+            <img className="card-img" src={image} alt="Potássio" />
+            <h3>Potássio</h3>
+            <p>{lastMessage.potassium}</p>
+          </div>
+        </div>
+
+        <br />
+        <br />
+        <RealTimeChart dataStream={currentValue} />
       </div>
-      <br></br>
-      <RealTimeChart dataStream={currentValue} />
     </div>
   );
 };

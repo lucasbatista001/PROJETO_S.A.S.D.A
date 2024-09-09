@@ -98,7 +98,7 @@ const RealTimeChart = ({ dataStream }) => {
           />
         </div>
       </div>
-      <div className="">
+      <div className="card2">
         <h3>Níveis Combinados</h3>
         <Chart
           options={{
