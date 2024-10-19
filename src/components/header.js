@@ -11,7 +11,6 @@ const Header = () => {
       <div style={styles.headerRight}>
         <a style={styles.link} href="/Dashboard">Dashboard</a>
         <a style={styles.link} href="/result">Resultados</a>
-        <a style={styles.link} href="/calculation">Cálculo</a>
         <a style={styles.link} href="/sobre">Sobre</a>
       </div>
     </header>
